@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Button } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '../utils/supabase';
 import { User } from '@supabase/supabase-js';
@@ -62,6 +62,14 @@ export default function Index() {
         Votre application de révision par flashcards
       </Text>
       <Text style={styles.welcome}>Bienvenue {user?.email}</Text>
+      <Button
+        title="Voir les decks"
+        onPress={() => router.replace('/deck')}
+      />
+      <Button
+        title="Créer une card"
+        onPress={() => router.replace('/card')}
+      />
       <LogoutButton />
     </View>
   );
