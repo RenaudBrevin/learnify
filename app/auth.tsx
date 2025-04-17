@@ -8,8 +8,6 @@ const Auth = () => {
     const [name, setName] = useState('');
     const [isLogin, setIsLogin] = useState(true);
 
-    handleAuth(email, password, name, isLogin);
-
     return (
         <View style={styles.container}>
             <Text style={styles.title}>FlashCards App</Text>

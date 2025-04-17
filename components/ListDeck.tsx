@@ -1,32 +1,39 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Deck, Flashcard } from '../utils/types';
-import { renderDeckItem } from './ItemDeck';
 import { createDeck } from '../utils/actions';
-import { renderCardItem } from './ItemCard';
+import { Deck } from '../utils/types';
+import { renderDeckItem } from './ItemDeck';
 
 type DeckListViewProps = {
     decks: Deck[];
     setSelectedDeck: (deck: Deck) => void;
     loadCards: (deckId: string) => void;
+    setDecks: (decks: Deck[]) => void;
+    isLoadingDeck: boolean;
 };
 
 export const DeckListView: React.FC<DeckListViewProps> = ({
     decks,
     setSelectedDeck,
-    loadCards
+    loadCards,
+    setDecks,
+    isLoadingDeck,
 }) => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
-    const [availableCards, setAvailableCards] = useState<Flashcard[]>([]);
-    const [selectedCards, setSelectedCards] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [title, setTitle] = useState('');
 
     const handleCreateDeck = async () => {
         setIsLoading(true);
-        await createDeck(title);
+        const deckCreated = await createDeck(title);
         setIsLoading(false);
         setModalVisible(false);
+
+        if (deckCreated != undefined) {
+            setDecks(prevDecks => [...prevDecks, deckCreated]);
+            return deckCreated;
+        }
     };
 
     return (
@@ -40,7 +47,11 @@ export const DeckListView: React.FC<DeckListViewProps> = ({
                     style={styles.deckList}
                 />
             ) : (
-                <Text style={styles.emptyText}>Aucun deck disponible</Text>
+                isLoadingDeck ? (
+                    <Text style={styles.emptyText}>Chargement...</Text>
+                ) : (
+                    <Text style={styles.emptyText}>Aucun deck disponible</Text>
+                )
             )}
             <TouchableOpacity
                 style={styles.addDeckButton}
@@ -63,7 +74,7 @@ export const DeckListView: React.FC<DeckListViewProps> = ({
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>Créer un nouveau deck</Text>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                <Text>X</Text>
+                                <Ionicons name="close" size={24} color="#333" />
                             </TouchableOpacity>
                         </View>
 
@@ -75,27 +86,6 @@ export const DeckListView: React.FC<DeckListViewProps> = ({
                             value={title}
                         />
 
-                        <Text style={styles.sectionTitle}>Sélectionner des cartes (optionnel)</Text>
-
-                        {availableCards?.length > 0 ? (
-                            <FlatList
-                                data={availableCards}
-                                renderItem={renderCardItem}
-                                keyExtractor={item => item.id}
-                                style={styles.cardList}
-                            />
-                        ) : (
-                            <Text style={styles.emptyText}>
-                                {isLoading ? "Chargement des cartes..." : "Aucune carte disponible"}
-                            </Text>
-                        )}
-
-                        <View style={styles.selectionInfo}>
-                            <Text style={styles.selectionText}>
-                                {selectedCards?.length} carte(s) sélectionnée(s)
-                            </Text>
-                        </View>
-
                         <View style={styles.modalButtons}>
                             <TouchableOpacity
                                 style={styles.cancelButton}
@@ -106,7 +96,14 @@ export const DeckListView: React.FC<DeckListViewProps> = ({
 
                             <TouchableOpacity
                                 style={[styles.createButton, isLoading && styles.disabledButton]}
-                                onPress={handleCreateDeck}
+                                onPress={() => {
+                                    const deckCreated = handleCreateDeck();
+                                    if (deckCreated) {
+                                        setSelectedDeck(deckCreated);
+                                        loadCards(deckCreated.id);
+                                        // setDecks(prevDecks => [...prevDecks, deckCreated]);
+                                    }
+                                }}
                                 disabled={isLoading}
                             >
                                 <Text style={styles.createButtonText}>

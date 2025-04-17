@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { renderCardItem } from '../components/ItemCard';
 import { DeckListView } from '../components/ListDeck';
-import { createCard, deleteCard, getAllDecks, getCardsByDeck, updateCard } from '../utils/actions';
+import { createCard, deleteCard, deleteDeck, getAllDecks, getCardsByDeck, updateCard } from '../utils/actions';
 import { Deck, Flashcard } from '../utils/types';
 
 
@@ -16,10 +16,13 @@ const Card = () => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [currentCardId, setCurrentCardId] = useState<string | null>(null);
+    const [isLoadingDeck, setIsLoadingDeck] = useState<boolean>(false);
 
     const fetchDecks = async () => {
+        setIsLoadingDeck(true);
         const data = await getAllDecks();
         setDecks(data);
+        setIsLoadingDeck(false);
     };
     useEffect(() => {
         fetchDecks();
@@ -105,7 +108,19 @@ const Card = () => {
                 </TouchableOpacity>
             </View>
 
-            <Text style={styles.title}>{selectedDeck?.title}</Text>
+            <View style={styles.headerDeck}>
+                <Text style={styles.title}>{selectedDeck?.title}</Text>
+                <TouchableOpacity
+                    onPress={() => {
+                        deleteDeck(selectedDeck?.id);
+                        setSelectedDeck(null);
+                        setCards([]);
+                        fetchDecks();
+                    }}
+                >
+                    <Ionicons name="trash" size={24} color="#FF3B30" />
+                </TouchableOpacity>
+            </View>
 
             <View style={styles.cardListHeader}>
                 <Text style={styles.subtitle}>Cartes</Text>
@@ -117,6 +132,7 @@ const Card = () => {
                         setAnswer('');
                         setCurrentCardId(null);
                         setModalVisible(true);
+                        getCardsByDeck(selectedDeck?.id).then((data) => setCards(data));
                     }}
                 >
                     <Ionicons name="add" size={24} color="#fff" />
@@ -144,6 +160,8 @@ const Card = () => {
                     decks={decks}
                     setSelectedDeck={setSelectedDeck}
                     loadCards={loadCards}
+                    setDecks={setDecks}
+                    isLoadingDeck={isLoadingDeck}
                 />
             }
             <Modal
@@ -155,7 +173,7 @@ const Card = () => {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>
-                            {isEditing ? "Modifier la carte" : "Créer une carte"}
+                            {isEditing ? "Modifier la carte" : "Ajouter la carte"}
                         </Text>
 
                         <TextInput
@@ -189,7 +207,7 @@ const Card = () => {
                                 onPress={handleCreateCard}
                             >
                                 <Text style={styles.saveButtonText}>
-                                    {isEditing ? "Enregistrer" : "Créer"}
+                                    {isEditing ? "Enregistrer" : "Ajouter"}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -324,6 +342,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginTop: 24,
     },
+    headerDeck: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    }
 });
 
 export default Card;

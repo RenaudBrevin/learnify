@@ -24,15 +24,15 @@ export const getCardsByDeck = async (deckId: string, setCards?: Function) => {
             .from('flashcards')
             .select('*')
             .eq('deck_id', deckId);
-            
+
         if (error) {
             throw error;
         }
-        
+
         if (setCards) {
             setCards(data);
         }
-        
+
         return data;
     } catch (error) {
         Alert.alert('Error', (error as Error).message);
@@ -41,45 +41,44 @@ export const getCardsByDeck = async (deckId: string, setCards?: Function) => {
 };
 
 export const createDeck = async (title: string) => {
-  try {
-    if (!title) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
-      return;
+    try {
+        if (!title) {
+            Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+            return;
+        }
+
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+            throw new Error("Impossible de récupérer l'utilisateur");
+        }
+
+        const userId = user.id;
+
+        const { error } = await supabase.from('decks').insert({
+            title: title,
+            user_id: userId,
+        });
+
+        if (error) {
+            throw error;
+        }
+
+    } catch (error) {
+        Alert.alert('Erreur', (error as Error).message);
     }
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      throw new Error("Impossible de récupérer l'utilisateur");
-    }
-
-    const userId = user.id;
-
-    const { error } = await supabase.from('decks').insert({
-      title: title,
-      user_id: userId, 
-    });
-
-    if (error) {
-      throw error;
-    }
-
-    Alert.alert('Succès', 'Deck créé avec succès');
-  } catch (error) {
-    Alert.alert('Erreur', (error as Error).message);
-  }
 };
 
 
 export const deleteDeck = async (deckId: string) => {
     try {
+        deleteCardFromDeck(deckId);
         const { error } = await supabase.from('decks').delete().eq('id', deckId);
 
         if (error) {
             throw error;
         }
 
-        Alert.alert('Succès', 'Deck supprimé avec succès');
     } catch (error) {
         Alert.alert('Erreur', (error as Error).message);
     }
@@ -98,7 +97,6 @@ export const updateDeck = async (deckId: string, title: string) => {
             throw error;
         }
 
-        Alert.alert('Succès', 'Deck mis à jour avec succès');
     } catch (error) {
         Alert.alert('Erreur', (error as Error).message);
     }
@@ -142,7 +140,6 @@ export const createCard = async (deck: string, question: string, answer: string,
             throw error;
         }
 
-        Alert.alert('Succès', 'Carte créée avec succès');
         if (setQuestion) setQuestion('');
         if (setAnswer) setAnswer('');
         return true;
@@ -171,7 +168,6 @@ export const updateCard = async (cardId: string, question: string, answer: strin
             throw error;
         }
 
-        Alert.alert('Succès', 'Carte modifiée avec succès');
         return true;
     } catch (error) {
         Alert.alert('Erreur', (error as Error).message);
@@ -193,6 +189,22 @@ export const deleteCard = async (cardId: string) => {
     } catch (error) {
         Alert.alert('Erreur', (error as Error).message);
         return false;
+    }
+};
+
+
+export const deleteCardFromDeck = async (deckId: string) => {
+    try {
+        const { error } = await supabase
+            .from('flashcards')
+            .delete()
+            .eq('deck_id', deckId);
+
+        if (error) {
+            throw error;
+        }
+    } catch (error) {
+        Alert.alert('Erreur', (error as Error).message);
     }
 };
 
@@ -224,15 +236,17 @@ export async function handleAuth(email: string, password: string, name: string, 
             throw new Error("L'utilisateur n'a pas été créé correctement.");
         }
 
-        const { error: profileError } = await supabase
-            .from('users')
-            .insert({
-                id: authData?.user.id,
-                name: name,
-                email: email
-            });
+        if (name) {
+            const { error: profileError } = await supabase
+                .from('users')
+                .insert({
+                    id: authData?.user.id,
+                    name: name,
+                    email: email
+                });
 
-        if (profileError) throw profileError;
+            if (profileError) throw profileError;
+        }
 
         router.replace('/');
     }
