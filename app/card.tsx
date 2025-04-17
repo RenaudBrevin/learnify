@@ -1,159 +1,111 @@
-import { Picker } from '@react-native-picker/picker';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, FlatList, Modal, Alert } from 'react-native';
-import { createCard, getAllDecks, getCardsByDeck, deleteCard, updateCard } from '../utils/actions';
-import { Deck, Flashcard } from '../utils/types';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { renderCardItem } from '../components/ItemCard';
+import { renderDeckListView } from '../components/ListDeck';
+import { createCard, getAllDecks, getCardsByDeck, updateCard } from '../utils/actions';
+import { Deck, Flashcard } from '../utils/types';
+
 
 const Card = () => {
     const [decks, setDecks] = useState<Deck[]>([]);
-    const [selectedDeck, setSelectedDeck] = useState<string>('');
+    const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
     const [question, setQuestion] = useState<string>('');
     const [answer, setAnswer] = useState<string>('');
     const [cards, setCards] = useState<Flashcard[]>([]);
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [currentCardId, setCurrentCardId] = useState<string | null>(null);
-    
+
     useEffect(() => {
         loadDecks();
     }, []);
-    
-    useEffect(() => {
-        if (selectedDeck) {
-            loadCards();
-        }
-    }, [selectedDeck]);
-    
+
     const loadDecks = async () => {
         const fetchedDecks = await getAllDecks();
         if (fetchedDecks && fetchedDecks.length > 0) {
             setDecks(fetchedDecks);
         }
     };
-    
-    const loadCards = async () => {
-        const fetchedCards = await getCardsByDeck(selectedDeck, setCards);
+
+    const loadCards = async (deckId: string) => {
+        const fetchedCards = await getCardsByDeck(deckId);
         if (fetchedCards) {
             setCards(fetchedCards);
         }
     };
-    
+
+    const handleBackToDeckList = () => {
+        setSelectedDeck(null);
+        setCards([]);
+    };
+
     const handleCreateCard = async () => {
+        if (!selectedDeck) return;
+
         if (isEditing && currentCardId) {
             await updateCard(currentCardId, question, answer);
         } else {
-            await createCard(selectedDeck, question, answer, setQuestion, setAnswer);
+            await createCard(selectedDeck.id, question, answer);
         }
         setModalVisible(false);
         setQuestion('');
         setAnswer('');
         setIsEditing(false);
         setCurrentCardId(null);
-        loadCards();
+        loadCards(selectedDeck.id);
     };
-    
-    const handleEditCard = (card: Flashcard) => {
-        setQuestion(card.question);
-        setAnswer(card.answer);
-        setCurrentCardId(card.id);
-        setIsEditing(true);
-        setModalVisible(true);
-    };
-    
-    const handleDeleteCard = async (id: string) => {
-        Alert.alert(
-            "Confirmation",
-            "Êtes-vous sûr de vouloir supprimer cette carte ?",
-            [
-                {
-                    text: "Annuler",
-                    style: "cancel"
-                },
-                {
-                    text: "Supprimer",
-                    onPress: async () => {
-                        await deleteCard(id);
-                        loadCards();
-                    },
-                    style: "destructive"
-                }
-            ]
-        );
-    };
-    
-    const renderCardItem = ({ item }: { item: Flashcard }) => (
-        <View style={styles.cardItem}>
-            <View style={styles.cardContent}>
-                <Text style={styles.cardQuestion}>{item.question}</Text>
-                <Text style={styles.cardAnswer}>{item.answer}</Text>
-            </View>
-            <View style={styles.cardActions}>
-                <TouchableOpacity 
-                    style={styles.editButton} 
-                    onPress={() => handleEditCard(item)}
+
+    const renderDeckDetailView = () => (
+        <>
+            <View style={styles.headerWithBack}>
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={handleBackToDeckList}
                 >
-                    <Ionicons name="pencil" size={22} color="#4285F4" />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                    style={styles.deleteButton} 
-                    onPress={() => handleDeleteCard(item.id)}
-                >
-                    <Ionicons name="trash" size={22} color="#FF3B30" />
+                    <Ionicons name="arrow-back" size={24} color="#007AFF" />
+                    <Text style={styles.backButtonText}>Retour</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+
+            <Text style={styles.title}>{selectedDeck?.title}</Text>
+
+            <View style={styles.cardListHeader}>
+                <Text style={styles.subtitle}>Cartes</Text>
+                <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={() => {
+                        setIsEditing(false);
+                        setQuestion('');
+                        setAnswer('');
+                        setCurrentCardId(null);
+                        setModalVisible(true);
+                    }}
+                >
+                    <Ionicons name="add" size={24} color="#fff" />
+                </TouchableOpacity>
+            </View>
+
+            {cards.length > 0 ? (
+                <FlatList
+                    data={cards}
+                    renderItem={renderCardItem}
+                    keyExtractor={item => item.id}
+                    style={styles.cardList}
+                />
+            ) : (
+                <Text style={styles.emptyText}>Aucune carte dans ce deck</Text>
+            )}
+        </>
     );
-    
+
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Gestion des cartes</Text>
-            
-            <View style={styles.deckSelector}>
-                <Text style={styles.selectLabel}>Choisir un deck:</Text>
-                <Picker
-                    selectedValue={selectedDeck}
-                    onValueChange={(itemValue) => setSelectedDeck(itemValue)}
-                    style={styles.picker}
-                >
-                    <Picker.Item label="Sélectionner..." value="" />
-                    {decks.map((deck) => (
-                        <Picker.Item key={deck.id} label={deck.title} value={deck.id} />
-                    ))}
-                </Picker>
-            </View>
-            
-            {selectedDeck && (
-                <>
-                    <View style={styles.cardListHeader}>
-                        <Text style={styles.subtitle}>Liste des cartes</Text>
-                        <TouchableOpacity 
-                            style={styles.addButton}
-                            onPress={() => {
-                                setIsEditing(false);
-                                setQuestion('');
-                                setAnswer('');
-                                setCurrentCardId(null);
-                                setModalVisible(true);
-                            }}
-                        >
-                            <Ionicons name="add" size={24} color="#fff" />
-                        </TouchableOpacity>
-                    </View>
-                    
-                    {cards.length > 0 ? (
-                        <FlatList
-                            data={cards}
-                            renderItem={renderCardItem}
-                            keyExtractor={item => item.id}
-                            style={styles.cardList}
-                        />
-                    ) : (
-                        <Text style={styles.emptyText}>Aucune carte dans ce deck</Text>
-                    )}
-                </>
-            )}
-            
+            {selectedDeck ?
+                renderDeckDetailView() :
+                renderDeckListView(decks, setSelectedDeck, loadCards)
+            }
+
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -165,7 +117,7 @@ const Card = () => {
                         <Text style={styles.modalTitle}>
                             {isEditing ? "Modifier la carte" : "Créer une carte"}
                         </Text>
-                        
+
                         <TextInput
                             style={styles.input}
                             placeholder="Question"
@@ -174,7 +126,7 @@ const Card = () => {
                             value={question}
                             multiline
                         />
-                        
+
                         <TextInput
                             style={[styles.input, styles.answerInput]}
                             placeholder="Réponse"
@@ -183,16 +135,16 @@ const Card = () => {
                             value={answer}
                             multiline
                         />
-                        
+
                         <View style={styles.modalButtons}>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.cancelButton}
                                 onPress={() => setModalVisible(false)}
                             >
                                 <Text style={styles.cancelButtonText}>Annuler</Text>
                             </TouchableOpacity>
-                            
-                            <TouchableOpacity 
+
+                            <TouchableOpacity
                                 style={styles.saveButton}
                                 onPress={handleCreateCard}
                             >
@@ -208,43 +160,45 @@ const Card = () => {
     );
 };
 
-export default Card;
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
-        padding: 20,
+        padding: 16,
+        backgroundColor: '#f5f5f5',
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 20,
-        textAlign: 'center',
+        marginBottom: 16,
+        color: '#333',
     },
     subtitle: {
         fontSize: 18,
         fontWeight: '600',
-    },
-    deckSelector: {
-        marginBottom: 20,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
-        padding: 5,
-    },
-    selectLabel: {
-        marginBottom: 5,
-        fontWeight: '500',
-    },
-    picker: {
-        height: 50,
+        color: '#333',
     },
     cardListHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 15,
+        marginBottom: 16,
+    },
+    cardList: {
+        flex: 1,
+    },
+    headerWithBack: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    backButtonText: {
+        fontSize: 16,
+        color: '#007AFF',
+        marginLeft: 4,
     },
     addButton: {
         backgroundColor: '#4285F4',
@@ -253,73 +207,38 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        elevation: 3,
-    },
-    cardList: {
-        flex: 1,
-    },
-    cardItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        padding: 15,
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
-        borderRadius: 8,
-        marginBottom: 10,
-        backgroundColor: '#f9f9f9',
-    },
-    cardContent: {
-        flex: 1,
-    },
-    cardQuestion: {
-        fontWeight: 'bold',
-        fontSize: 16,
-        marginBottom: 5,
-    },
-    cardAnswer: {
-        color: '#555',
-    },
-    cardActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    editButton: {
-        padding: 8,
-        marginRight: 10,
-    },
-    deleteButton: {
-        padding: 8,
-    },
-    emptyText: {
-        textAlign: 'center',
-        marginTop: 20,
-        color: '#999',
-        fontStyle: 'italic',
     },
     modalOverlay: {
         flex: 1,
         justifyContent: 'center',
         backgroundColor: 'rgba(0,0,0,0.5)',
-        padding: 20,
+        padding: 16,
     },
     modalContent: {
         backgroundColor: '#fff',
-        borderRadius: 10,
+        borderRadius: 12,
         padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
         elevation: 5,
     },
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 15,
+        marginBottom: 16,
+        color: '#333',
         textAlign: 'center',
     },
     input: {
         borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
+        borderColor: '#ddd',
+        borderRadius: 8,
         padding: 12,
-        marginBottom: 15,
+        marginBottom: 16,
+        fontSize: 16,
+        backgroundColor: '#f9f9f9',
         minHeight: 50,
     },
     answerInput: {
@@ -328,31 +247,43 @@ const styles = StyleSheet.create({
     modalButtons: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 10,
+        marginTop: 8,
+    },
+    cancelButton: {
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        flex: 1,
+        marginRight: 8,
+        alignItems: 'center',
+    },
+    cancelButtonText: {
+        color: '#666',
+        fontSize: 16,
+        fontWeight: '600',
     },
     saveButton: {
         backgroundColor: '#4285F4',
         paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 5,
+        paddingHorizontal: 16,
+        borderRadius: 8,
         flex: 1,
-        marginLeft: 10,
+        marginLeft: 8,
+        alignItems: 'center',
     },
     saveButtonText: {
         color: '#fff',
-        textAlign: 'center',
-        fontWeight: 'bold',
+        fontSize: 16,
+        fontWeight: '600',
     },
-    cancelButton: {
-        backgroundColor: '#f2f2f2',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-        flex: 1,
-        marginRight: 10,
-    },
-    cancelButtonText: {
-        color: '#333',
+    emptyText: {
         textAlign: 'center',
+        color: '#666',
+        fontSize: 16,
+        marginTop: 24,
     },
 });
+
+export default Card;
