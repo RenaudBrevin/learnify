@@ -6,47 +6,35 @@ import { Layers, Home, CreditCard } from 'react-native-feather';
 export function NavBar() {
   const router = useRouter();
   const pathname = usePathname();
-  
-  const isActive = (routeName) => {
+
+  const isActive = (routeName: string) => {
     return pathname === routeName;
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        style={[styles.navItem, isActive('/') && styles.activeNavItem]} 
+      <TouchableOpacity
+        style={[styles.navItem, isActive('/') && styles.activeNavItem]}
         onPress={() => router.push('/')}
       >
-        <Home 
-          stroke={isActive('/') ? '#6366F1' : '#6B7280'} 
-          width={24} 
-          height={24} 
+        <Home
+          stroke={isActive('/') ? '#6366F1' : '#6B7280'}
+          width={24}
+          height={24}
         />
         <Text style={[styles.navText, isActive('/') && styles.activeNavText]}>Accueil</Text>
       </TouchableOpacity>
-      
-      <TouchableOpacity 
-        style={[styles.navItem, isActive('/card') && styles.activeNavItem]} 
+
+      <TouchableOpacity
+        style={[styles.navItem, isActive('/card') && styles.activeNavItem]}
         onPress={() => router.push('/card')}
       >
-        <CreditCard 
-          stroke={isActive('/card') ? '#6366F1' : '#6B7280'} 
-          width={24} 
-          height={24} 
+        <CreditCard
+          stroke={isActive('/card') ? '#6366F1' : '#6B7280'}
+          width={24}
+          height={24}
         />
         <Text style={[styles.navText, isActive('/card') && styles.activeNavText]}>Carte</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity 
-        style={[styles.navItem, isActive('/deck') && styles.activeNavItem]} 
-        onPress={() => router.push('/deck')}
-      >
-        <Layers 
-          stroke={isActive('/deck') ? '#6366F1' : '#6B7280'} 
-          width={24} 
-          height={24} 
-        />
-        <Text style={[styles.navText, isActive('/deck') && styles.activeNavText]}>Deck</Text>
       </TouchableOpacity>
     </View>
   );
