@@ -18,15 +18,14 @@ const Card = () => {
     const [currentCardId, setCurrentCardId] = useState<string | null>(null);
 
     useEffect(() => {
-        loadDecks();
+        const fetchDecks = async () => {
+            const data = await getAllDecks();
+            setDecks(data);
+        };
+        fetchDecks();
     }, []);
-
-    const loadDecks = async () => {
-        const fetchedDecks = await getAllDecks();
-        if (fetchedDecks && fetchedDecks.length > 0) {
-            setDecks(fetchedDecks);
-        }
-    };
+    
+    console.log(decks);
 
     const loadCards = async (deckId: string) => {
         const fetchedCards = await getCardsByDeck(deckId);

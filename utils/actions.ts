@@ -2,16 +2,14 @@ import { router } from 'expo-router';
 import { Alert } from 'react-native';
 import { supabase } from '../utils/supabase';
 
-
-// Cards 
-export const getAllDecks = async (setDeck?: Function) => {
+export const getAllDecks = async (setDecks?: Function) => {
     try {
         const { data, error } = await supabase.from('decks').select('id, title, user_id');
         if (error) {
             throw error;
         }
-        if (setDeck) {
-            setDeck(data);
+        if (setDecks) {
+            setDecks(data);
         }
         return data;
     } catch (error) {
@@ -43,25 +41,35 @@ export const getCardsByDeck = async (deckId: string, setCards?: Function) => {
 };
 
 export const createDeck = async (title: string) => {
-    try {
-        if (!title) {
-            Alert.alert('Erreur', 'Veuillez remplir tous les champs');
-            return;
-        }
-
-        const { error } = await supabase.from('decks').insert({
-            title: title,
-        });
-
-        if (error) {
-            throw error;
-        }
-
-        Alert.alert('Succès', 'Deck créé avec succès');
-    } catch (error) {
-        Alert.alert('Erreur', (error as Error).message);
+  try {
+    if (!title) {
+      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+      return;
     }
-}
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      throw new Error("Impossible de récupérer l'utilisateur");
+    }
+
+    const userId = user.id;
+
+    const { error } = await supabase.from('decks').insert({
+      title: title,
+      user_id: userId, 
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    Alert.alert('Succès', 'Deck créé avec succès');
+  } catch (error) {
+    Alert.alert('Erreur', (error as Error).message);
+  }
+};
+
 
 export const deleteDeck = async (deckId: string) => {
     try {

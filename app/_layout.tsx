@@ -15,6 +15,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingBottom: 60, // à la place de marginBottom, pour éviter un "trou" sous la navbar
+    paddingBottom: 60,
   },
 });
