@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { renderCardItem } from '../components/ItemCard';
-import { renderDeckListView } from '../components/ListDeck';
-import { createCard, getAllDecks, getCardsByDeck, updateCard } from '../utils/actions';
+import { DeckListView } from '../components/ListDeck';
+import { createCard, deleteCard, getAllDecks, getCardsByDeck, updateCard } from '../utils/actions';
 import { Deck, Flashcard } from '../utils/types';
 
 
@@ -17,15 +17,13 @@ const Card = () => {
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [currentCardId, setCurrentCardId] = useState<string | null>(null);
 
+    const fetchDecks = async () => {
+        const data = await getAllDecks();
+        setDecks(data);
+    };
     useEffect(() => {
-        const fetchDecks = async () => {
-            const data = await getAllDecks();
-            setDecks(data);
-        };
         fetchDecks();
     }, []);
-    
-    console.log(decks);
 
     const loadCards = async (deckId: string) => {
         const fetchedCards = await getCardsByDeck(deckId);
@@ -37,6 +35,46 @@ const Card = () => {
     const handleBackToDeckList = () => {
         setSelectedDeck(null);
         setCards([]);
+    };
+
+    const handleEditCard = (card: Flashcard) => {
+        setQuestion(card.question);
+        setAnswer(card.answer);
+        setCurrentCardId(card.id);
+        setIsEditing(true);
+        setModalVisible(true);
+    };
+
+
+    const handleDeleteCard = async (id: string) => {
+        Alert.alert(
+            "Confirmation",
+            "Êtes-vous sûr de vouloir supprimer cette carte ?",
+            [
+                {
+                    text: "Annuler",
+                    style: "cancel"
+                },
+                {
+                    text: "Supprimer",
+                    onPress: async () => {
+                        await deleteCard(id);
+                        if (selectedDeck) {
+                            loadCards(selectedDeck.id);
+                        }
+                    },
+                    style: "destructive"
+                }
+            ]
+        );
+    };
+
+    const renderCard = ({ item }: { item: Flashcard }) => {
+        return renderCardItem({
+            item,
+            onEdit: handleEditCard,
+            onDelete: handleDeleteCard
+        });
     };
 
     const handleCreateCard = async () => {
@@ -88,7 +126,7 @@ const Card = () => {
             {cards.length > 0 ? (
                 <FlatList
                     data={cards}
-                    renderItem={renderCardItem}
+                    renderItem={renderCard}
                     keyExtractor={item => item.id}
                     style={styles.cardList}
                 />
@@ -102,9 +140,12 @@ const Card = () => {
         <View style={styles.container}>
             {selectedDeck ?
                 renderDeckDetailView() :
-                renderDeckListView(decks, setSelectedDeck, loadCards)
+                <DeckListView
+                    decks={decks}
+                    setSelectedDeck={setSelectedDeck}
+                    loadCards={loadCards}
+                />
             }
-
             <Modal
                 animationType="slide"
                 transparent={true}

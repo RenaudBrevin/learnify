@@ -1,11 +1,11 @@
-import { Stack } from "expo-router";
+import { Slot } from "expo-router";
 import { NavBar } from "../components/NavBar";
 import { StyleSheet, View } from "react-native";
 
 export default function RootLayout() {
   return (
     <View style={styles.container}>
-      <Stack />
+      <Slot />
       <NavBar />
     </View>
   );

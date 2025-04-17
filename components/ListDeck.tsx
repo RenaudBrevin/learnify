@@ -5,11 +5,17 @@ import { renderDeckItem } from './ItemDeck';
 import { createDeck } from '../utils/actions';
 import { renderCardItem } from './ItemCard';
 
-export const renderDeckListView = (
-    decks: Deck[],
-    setSelectedDeck: Function,
-    loadCards: Function
-) => {
+type DeckListViewProps = {
+    decks: Deck[];
+    setSelectedDeck: (deck: Deck) => void;
+    loadCards: (deckId: string) => void;
+};
+
+export const DeckListView: React.FC<DeckListViewProps> = ({
+    decks,
+    setSelectedDeck,
+    loadCards
+}) => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [availableCards, setAvailableCards] = useState<Flashcard[]>([]);
     const [selectedCards, setSelectedCards] = useState<string[]>([]);
@@ -114,7 +120,6 @@ export const renderDeckListView = (
         </>
     );
 };
-
 
 
 const styles = StyleSheet.create({

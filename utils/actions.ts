@@ -189,8 +189,6 @@ export const deleteCard = async (cardId: string) => {
         if (error) {
             throw error;
         }
-
-        Alert.alert('Succès', 'Carte supprimée avec succès');
         return true;
     } catch (error) {
         Alert.alert('Erreur', (error as Error).message);

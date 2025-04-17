@@ -1,80 +1,38 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { deleteCard, getCardsByDeck } from '../utils/actions';
-import { Deck, Flashcard } from '../utils/types';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Flashcard } from '../utils/types';
 
-const [decks, setDecks] = useState<Deck[]>([]);
-const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
-const [question, setQuestion] = useState<string>('');
-const [answer, setAnswer] = useState<string>('');
-const [cards, setCards] = useState<Flashcard[]>([]);
-const [modalVisible, setModalVisible] = useState<boolean>(false);
-const [isEditing, setIsEditing] = useState<boolean>(false);
-const [currentCardId, setCurrentCardId] = useState<string | null>(null);
-
-const handleEditCard = (card: Flashcard) => {
-    setQuestion(card.question);
-    setAnswer(card.answer);
-    setCurrentCardId(card.id);
-    setIsEditing(true);
-    setModalVisible(true);
+type CardItemProps = {
+    item: Flashcard;
+    onEdit: (card: Flashcard) => void;
+    onDelete: (id: string) => void;
 };
 
-const loadCards = async (deckId: string) => {
-    const fetchedCards = await getCardsByDeck(deckId);
-    if (fetchedCards) {
-        setCards(fetchedCards);
-    }
-};
-
-const handleDeleteCard = async (id: string) => {
-    Alert.alert(
-        "Confirmation",
-        "Êtes-vous sûr de vouloir supprimer cette carte ?",
-        [
-            {
-                text: "Annuler",
-                style: "cancel"
-            },
-            {
-                text: "Supprimer",
-                onPress: async () => {
-                    await deleteCard(id);
-                    if (selectedDeck) {
-                        loadCards(selectedDeck.id);
-                    }
-                },
-                style: "destructive"
-            }
-        ]
-    );
-};
-
-export const renderCardItem = ({ item }: { item: Flashcard }) => (
-    <View style={styles.cardItem}>
-        <View style={styles.cardContent}>
-            <Text style={styles.cardQuestion}>{item.question}</Text>
-            <Text style={styles.cardAnswer}>{item.answer}</Text>
+export const renderCardItem = ({ item, onEdit, onDelete }: CardItemProps) => {
+    return (
+        <View style={styles.cardItem}>
+            <View style={styles.cardContent}>
+                <Text style={styles.cardQuestion}>{item.question}</Text>
+                <Text style={styles.cardAnswer}>{item.answer}</Text>
+            </View>
+            <View style={styles.cardActions}>
+                <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => onEdit(item)}
+                >
+                    <Ionicons name="pencil" size={22} color="#4285F4" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => onDelete(item.id)}
+                >
+                    <Ionicons name="trash" size={22} color="#FF3B30" />
+                </TouchableOpacity>
+            </View>
         </View>
-        <View style={styles.cardActions}>
-            <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => handleEditCard(item)}
-            >
-                <Ionicons name="pencil" size={22} color="#4285F4" />
-            </TouchableOpacity>
-            <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeleteCard(item.id)}
-            >
-                <Ionicons name="trash" size={22} color="#FF3B30" />
-            </TouchableOpacity>
-        </View>
-    </View>
-);
-
-
+    )
+};
 
 const styles = StyleSheet.create({
     cardItem: {
