@@ -6,7 +6,7 @@ import { supabase } from '../utils/supabase';
 // Cards 
 export const getAllDecks = async (setDeck?: Function) => {
     try {
-        const { data, error } = await supabase.from('decks').select('id, title');
+        const { data, error } = await supabase.from('decks').select('id, title, user_id');
         if (error) {
             throw error;
         }
@@ -41,6 +41,81 @@ export const getCardsByDeck = async (deckId: string, setCards?: Function) => {
         return [];
     }
 };
+
+export const createDeck = async (title: string) => {
+    try {
+        if (!title) {
+            Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+            return;
+        }
+
+        const { error } = await supabase.from('decks').insert({
+            title: title,
+        });
+
+        if (error) {
+            throw error;
+        }
+
+        Alert.alert('Succès', 'Deck créé avec succès');
+    } catch (error) {
+        Alert.alert('Erreur', (error as Error).message);
+    }
+}
+
+export const deleteDeck = async (deckId: string) => {
+    try {
+        const { error } = await supabase.from('decks').delete().eq('id', deckId);
+
+        if (error) {
+            throw error;
+        }
+
+        Alert.alert('Succès', 'Deck supprimé avec succès');
+    } catch (error) {
+        Alert.alert('Erreur', (error as Error).message);
+    }
+};
+
+export const updateDeck = async (deckId: string, title: string) => {
+    try {
+        if (!title) {
+            Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+            return;
+        }
+
+        const { error } = await supabase.from('decks').update({ title }).eq('id', deckId);
+
+        if (error) {
+            throw error;
+        }
+
+        Alert.alert('Succès', 'Deck mis à jour avec succès');
+    } catch (error) {
+        Alert.alert('Erreur', (error as Error).message);
+    }
+};
+
+
+
+// Cards 
+export const getAllCards = async (deckId: string, setCards: Function) => {
+    try {
+        const { data, error } = await supabase
+            .from('flashcards')
+            .select('id, question, answer')
+            .eq('deck_id', deckId);
+
+        if (error) {
+            throw error;
+        }
+
+        setCards(data);
+        return data;
+    } catch (error) {
+        Alert.alert('Error', (error as Error).message);
+    }
+}
 
 export const createCard = async (deck: string, question: string, answer: string, setQuestion?: Function, setAnswer?: Function) => {
     try {
@@ -114,7 +189,6 @@ export const deleteCard = async (cardId: string) => {
         return false;
     }
 };
-
 
 // Auth
 export async function handleAuth(email: string, password: string, name: string, isLogin: boolean) {
