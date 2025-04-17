@@ -4,20 +4,45 @@ import { supabase } from '../utils/supabase';
 
 
 // Cards 
-export const getAllDecks = async (setDeck: Function) => {
+export const getAllDecks = async (setDeck?: Function) => {
     try {
         const { data, error } = await supabase.from('decks').select('id, title');
         if (error) {
             throw error;
         }
-        setDeck(data);
+        if (setDeck) {
+            setDeck(data);
+        }
         return data;
     } catch (error) {
         Alert.alert('Error', (error as Error).message);
+        return [];
     }
 };
 
-export const createCard = async (deck: string, question: string, answer: string, setQuestion: Function, setAnswer: Function) => {
+export const getCardsByDeck = async (deckId: string, setCards?: Function) => {
+    try {
+        const { data, error } = await supabase
+            .from('flashcards')
+            .select('*')
+            .eq('deck_id', deckId);
+            
+        if (error) {
+            throw error;
+        }
+        
+        if (setCards) {
+            setCards(data);
+        }
+        
+        return data;
+    } catch (error) {
+        Alert.alert('Error', (error as Error).message);
+        return [];
+    }
+};
+
+export const createCard = async (deck: string, question: string, answer: string, setQuestion?: Function, setAnswer?: Function) => {
     try {
         if (!deck || !question || !answer) {
             Alert.alert('Erreur', 'Veuillez remplir tous les champs');
@@ -35,10 +60,58 @@ export const createCard = async (deck: string, question: string, answer: string,
         }
 
         Alert.alert('Succès', 'Carte créée avec succès');
-        setQuestion('');
-        setAnswer('');
+        if (setQuestion) setQuestion('');
+        if (setAnswer) setAnswer('');
+        return true;
     } catch (error) {
         Alert.alert('Erreur', (error as Error).message);
+        return false;
+    }
+};
+
+export const updateCard = async (cardId: string, question: string, answer: string) => {
+    try {
+        if (!cardId || !question || !answer) {
+            Alert.alert('Erreur', 'Informations incomplètes');
+            return false;
+        }
+
+        const { error } = await supabase
+            .from('flashcards')
+            .update({
+                question: question,
+                answer: answer,
+            })
+            .eq('id', cardId);
+
+        if (error) {
+            throw error;
+        }
+
+        Alert.alert('Succès', 'Carte modifiée avec succès');
+        return true;
+    } catch (error) {
+        Alert.alert('Erreur', (error as Error).message);
+        return false;
+    }
+};
+
+export const deleteCard = async (cardId: string) => {
+    try {
+        const { error } = await supabase
+            .from('flashcards')
+            .delete()
+            .eq('id', cardId);
+
+        if (error) {
+            throw error;
+        }
+
+        Alert.alert('Succès', 'Carte supprimée avec succès');
+        return true;
+    } catch (error) {
+        Alert.alert('Erreur', (error as Error).message);
+        return false;
     }
 };
 
