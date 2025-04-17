@@ -1,57 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { supabase } from '../utils/supabase';
-import { router } from 'expo-router';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { handleAuth } from '../utils/actions';
 
 const Auth = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
-    const [loading, setLoading] = useState(false);
     const [isLogin, setIsLogin] = useState(true);
 
-    async function handleAuth() {
-        if (!email || !password) {
-            Alert.alert('Erreur', 'Veuillez remplir tous les champs');
-            return;
-        }
-
-        setLoading(true);
-
-        if (isLogin) {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-
-            if (error) throw error;
-
-            router.replace('/');
-        } else {
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-                email,
-                password,
-            });
-
-            if (authError) throw authError;
-
-            if (!authData?.user) {
-                throw new Error("L'utilisateur n'a pas été créé correctement.");
-            }
-
-            const { error: profileError } = await supabase
-                .from('users')
-                .insert({
-                    id: authData?.user.id,
-                    name: name,
-                    email: email
-                });
-
-            if (profileError) throw profileError;
-
-            router.replace('/');
-        }
-    }
+    handleAuth(email, password, name, isLogin);
 
     return (
         <View style={styles.container}>
@@ -89,16 +46,11 @@ const Auth = () => {
 
                 <TouchableOpacity
                     style={styles.button}
-                    onPress={handleAuth}
-                    disabled={loading}
+                    onPress={() => handleAuth(email, password, name, isLogin)}
                 >
-                    {loading ? (
-                        <ActivityIndicator color="#fff" />
-                    ) : (
-                        <Text style={styles.buttonText}>
-                            {isLogin ? 'Se connecter' : 'S\'inscrire'}
-                        </Text>
-                    )}
+                    <Text style={styles.buttonText}>
+                        {isLogin ? 'Se connecter' : 'S\'inscrire'}
+                    </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity

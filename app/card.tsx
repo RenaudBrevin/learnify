@@ -1,13 +1,8 @@
 import { Picker } from '@react-native-picker/picker';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { supabase } from '../utils/supabase';
-
-
-interface Deck {
-    id: any;
-    title: any;
-}
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { createCard, getAllDecks } from '../utils/actions';
+import { Deck } from '../utils/types';
 
 const Card = () => {
     const [decks, setDecks] = useState<Deck[]>([]);
@@ -16,46 +11,11 @@ const Card = () => {
     const [answer, setAnswer] = useState<string>('');
 
     useEffect(() => {
-        fetchDecks();
+        getAllDecks(setDeck);
     }, []);
 
-    const fetchDecks = async () => {
-        try {
-            const { data, error } = await supabase.from('decks').select('id, title');
-            if (error) {
-                throw error;
-            }
-            setDecks(data);
-        } catch (error) {
-            Alert.alert('Error', (error as Error).message);
-        }
-    };
-
-    const createCard = async () => {
-        try {
-            if (!deck || !question || !answer) {
-                Alert.alert('Erreur', 'Veuillez remplir tous les champs');
-                return;
-            }
-
-            const { error } = await supabase.from('flashcards').insert({
-                deck_id: deck,
-                question: question,
-                answer: answer,
-            });
-
-            if (error) {
-                throw error;
-            }
-
-            Alert.alert('Succès', 'Carte créée avec succès');
-            setQuestion('');
-            setAnswer('');
-        } catch (error) {
-            Alert.alert('Erreur', (error as Error).message);
-        }
-    };
-
+    getAllDecks(setDeck)
+    
     return (
         <View style={styles.container}>
             <Text style={styles.subtitle}>Créer une carte</Text>
@@ -87,7 +47,7 @@ const Card = () => {
                 </Picker>
             </View>
 
-            <TouchableOpacity style={styles.button} onPress={() => createCard()}>
+            <TouchableOpacity style={styles.button} onPress={() => createCard(deck, question, answer, setQuestion, setAnswer)}>
                 <Text style={styles.buttonText}>Créer</Text>
             </TouchableOpacity>
         </View>
