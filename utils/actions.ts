@@ -55,19 +55,24 @@ export const createDeck = async (title: string) => {
 
         const userId = user.id;
 
-        const { error } = await supabase.from('decks').insert({
-            title: title,
-            user_id: userId,
-        });
+        const { data, error } = await supabase
+            .from('decks')
+            .insert({
+                title: title,
+                user_id: userId,
+            })
+            .select()
 
         if (error) {
             throw error;
         }
 
+        return data?.[0];
     } catch (error) {
         Alert.alert('Erreur', (error as Error).message);
     }
 };
+
 
 
 export const deleteDeck = async (deckId: string) => {

@@ -1,23 +1,15 @@
 import { Slot } from "expo-router";
-import { NavBar } from "../components/NavBar";
+import { useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { NavBar } from "../components/NavBar";
 import { supabase } from "../utils/supabase";
-import { useEffect } from "react";
 
 export default function RootLayout() {
-  let isLogin = false;
+  const [isLogin, setIsLogin] = useState(false);
 
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  async function checkUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      isLogin = true;
-    }
-  }
+  const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    setIsLogin(session?.user ? true : false);
+  });
 
   return (
     <View style={styles.container}>

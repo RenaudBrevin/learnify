@@ -30,8 +30,12 @@ export const DeckListView: React.FC<DeckListViewProps> = ({
         setIsLoading(false);
         setModalVisible(false);
 
+        console.log("Hence deckCreated", deckCreated);
+
         if (deckCreated != undefined) {
-            setDecks(prevDecks => [...prevDecks, deckCreated]);
+            const decksUpdated = [...decks, deckCreated]
+            setDecks(decksUpdated);
+            console.log("Return", deckCreated);
             return deckCreated;
         }
     };
@@ -96,14 +100,14 @@ export const DeckListView: React.FC<DeckListViewProps> = ({
 
                             <TouchableOpacity
                                 style={[styles.createButton, isLoading && styles.disabledButton]}
-                                onPress={() => {
-                                    const deckCreated = handleCreateDeck();
+                                onPress={async () => {
+                                    const deckCreated = await handleCreateDeck(); // ⬅️ await ici
                                     if (deckCreated) {
                                         setSelectedDeck(deckCreated);
                                         loadCards(deckCreated.id);
-                                        // setDecks(prevDecks => [...prevDecks, deckCreated]);
                                     }
                                 }}
+                                
                                 disabled={isLoading}
                             >
                                 <Text style={styles.createButtonText}>
