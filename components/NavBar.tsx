@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
-import { Layers, Home, CreditCard, Settings } from 'react-native-feather';
+import { Layers, Home, CreditCard, Settings, HelpCircle } from 'react-native-feather';
 
 export function NavBar() {
   const router = useRouter();
@@ -35,6 +35,18 @@ export function NavBar() {
           height={24}
         />
         <Text style={[styles.navText, isActive('/card') && styles.activeNavText]}>Carte</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.navItem, isActive('/sessions') && styles.activeNavItem]}
+        onPress={() => router.push('/sessions')}
+      >
+        <HelpCircle
+          stroke={isActive('/sessions') ? '#6366F1' : '#6B7280'}
+          width={24}
+          height={24}
+        />
+        <Text style={[styles.navText, isActive('/sessions') && styles.activeNavText]}>Quizz</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
