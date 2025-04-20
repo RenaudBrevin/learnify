@@ -128,6 +128,22 @@ export const getAllCards = async (deckId: string, setCards: Function) => {
     }
 }
 
+export const getAllCardsMulti = async (deckId: string) => {
+    try {
+        const { data, error } = await supabase
+            .from('flashcards')
+            .select('id, question, answer, deck_id')
+            .eq('deck_id', deckId);
+
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        Alert.alert('Error', (error as Error).message);
+        return [];
+    }
+};
+
+
 export const createCard = async (deck: string, question: string, answer: string, setQuestion?: Function, setAnswer?: Function) => {
     try {
         if (!deck || !question || !answer) {
@@ -256,3 +272,108 @@ export async function handleAuth(email: string, password: string, name: string, 
         router.replace('/');
     }
 }
+
+export const getUser = async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+        console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+        return;
+    }
+
+    if (data?.user) {
+        return data.user;
+    }
+};
+
+
+
+export const fetchFlashcards = async (deckIds: string[], setFlashcards: Function, setLoading: Function) => {
+    try {
+        const { data, error } = await supabase
+            .from('flashcards')
+            .select('*')
+            .in('deck_id', deckIds);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            const shuffled = data.sort(() => Math.random() - 0.5);
+
+            setFlashcards(shuffled.slice(0, 20));
+        } else {
+            setFlashcards([]);
+        }
+    } catch (error) {
+        console.error('Erreur lors de la récupération des flashcards :', error);
+    } finally {
+        setLoading(false);
+    }
+};
+
+export const saveSession = async (userId, deckId, deckCorrectAnswers, deckTotalQuestions) => {
+    await supabase
+        .from('sessions')
+        .insert({
+            user_id: userId,
+            deck_id: deckId,
+            correct_answers: deckCorrectAnswers,
+            total_questions: deckTotalQuestions,
+            created_at: new Date().toISOString(),
+        });
+}
+
+
+
+
+// Stats
+
+export const getSessionStats = async (userId) => {
+    //Fonction de staistique completement généré par IA
+    try {
+      const { data: sessions, error } = await supabase
+        .from('sessions')
+        .select(`
+          id,
+          deck_id,
+          correct_answers,
+          total_questions,
+          created_at,
+          decks(title)
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+  
+      if (error) throw error;
+      
+      const deckStats = {};
+      
+      sessions.forEach(session => {
+        const deckId = session.deck_id;
+        
+        if (!deckStats[deckId]) {
+          deckStats[deckId] = {
+            deckId,
+            deckTitle: session.decks?.title || 'Deck inconnu',
+            totalSessions: 0,
+            totalCorrect: 0,
+            totalQuestions: 0,
+            lastSessionDate: null
+          };
+        }
+        
+        deckStats[deckId].totalSessions += 1;
+        deckStats[deckId].totalCorrect += session.correct_answers;
+        deckStats[deckId].totalQuestions += session.total_questions;
+        
+        const sessionDate = new Date(session.created_at);
+        if (!deckStats[deckId].lastSessionDate || sessionDate > new Date(deckStats[deckId].lastSessionDate)) {
+          deckStats[deckId].lastSessionDate = session.created_at;
+        }
+      });
+      
+      return Object.values(deckStats);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des statistiques:', error);
+      return [];
+    }
+  };
