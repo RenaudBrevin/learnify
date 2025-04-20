@@ -29,7 +29,6 @@ const Card = () => {
     }, []);
 
     const loadCards = async (deckId: string) => {
-        console.log(deckId);
         const fetchedCards = await getCardsByDeck(deckId);
         if (fetchedCards) {
             setCards(fetchedCards);

@@ -4,7 +4,12 @@ import { supabase } from '../utils/supabase';
 
 export const getAllDecks = async (setDecks?: Function) => {
     try {
-        const { data, error } = await supabase.from('decks').select('id, title, user_id');
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        const { data, error } = await supabase
+            .from('decks')
+            .select('id, title, user_id')
+            .eq('user_id', user?.id);
         if (error) {
             throw error;
         }

@@ -42,7 +42,6 @@ const StatsScreen = ({ onBack }) => {
     const formatDate = (dateString) => {
         if (!dateString) return 'Jamais';
         try {
-            // return format(new Date(dateString), 'dd MMMM yyyy à HH:mm', { locale: fr });
             return dateString.split('T')[0].split('-').reverse().join(' ');
         } catch (error) {
             return 'Date invalide';

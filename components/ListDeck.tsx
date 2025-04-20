@@ -30,12 +30,9 @@ export const DeckListView: React.FC<DeckListViewProps> = ({
         setIsLoading(false);
         setModalVisible(false);
 
-        console.log("Hence deckCreated", deckCreated);
-
         if (deckCreated != undefined) {
             const decksUpdated = [...decks, deckCreated]
             setDecks(decksUpdated);
-            console.log("Return", deckCreated);
             return deckCreated;
         }
     };

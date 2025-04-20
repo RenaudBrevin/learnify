@@ -1,5 +1,7 @@
 # Learnify 📚
 
+**Groupe : Quentin PACHEU et Brévin RENAUD**
+
 **Learnify** est une application mobile de révision par flashcards, développée avec **React Native**, **Expo** et **Supabase**. Elle permet de créer des decks de cartes personnalisées, de s’entraîner via un mode apprentissage ou test, et de suivre ses statistiques de progression. L'application propose aussi des rappels quotidiens pour ne jamais oublier de réviser !
 
 ## 🚀 Fonctionnalités principales
@@ -33,6 +35,14 @@
    ```bash
    npx expo start
    ```
+
+## 📖 Login d'exemple
+
+Vous pouvez créer et vous connecter à votre propre compte, mais nous avons également créé un compte d'exemple avec des decks et des questions préremplis.
+
+- Login : comptexemple@gmail.com
+- Mot de passe : comptexemple
+
 
 
 Le projet utilise StyleSheet.create() pour le stylage.
